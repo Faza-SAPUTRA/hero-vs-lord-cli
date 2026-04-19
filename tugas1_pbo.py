@@ -14,13 +14,19 @@ class Hero:
 
     # method untuk masang item
     def set_item(self, item):
-        self.item = item
+        # cek dulu biar slot item ga ketimpa
+        if self.item is not None:
+            print(f"{self.name} sudah memiliki senjata.")
+        else:
+            self.item = item
+            print(f"{self.name} berhasil memakai {item.name} !")
 
     # memotong hp hero dan cegah minus
     def take_damage(self, damage):
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
+        print(f"HP {self.name} sekarang {self.hp}")
 
     # method bawaan untuk menyerang
     def attack(self, enemy):
@@ -33,8 +39,11 @@ class Hero:
             total_damage += self.item.damage
             nama_senjata = self.item.name
             
+        print(f"{self.name} menyerang {enemy.name} dengan senjata {nama_senjata} sebesar {total_damage}")
+        
         # panggil method musuh (polymorphism)
-        enemy.take_damage(total_damage, self, nama_senjata)
+        enemy.take_damage(total_damage, self)
+
 
 # parent class musuh
 class Enemy:
@@ -43,22 +52,22 @@ class Enemy:
         self.hp = hp
 
     # method kosong buat dioverride
-    def take_damage(self, damage, hero, weapon_name):
+    def take_damage(self, damage, hero):
         pass
 
 # musuh biasa tanpa shield
 class BasicEnemy(Enemy):
     # terima damage murni
-    def take_damage(self, damage, hero, weapon_name):
+    def take_damage(self, damage, hero):
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
             
-        print(f"{hero.name} menyerang {self.name} dengan {weapon_name} sebesar {damage} HP {self.name} sekarang {self.hp}")
+        print(f"HP {self.name} sekarang {self.hp}")
 
 # musuh pakai shield 30
 class ShieldEnemy(Enemy):
-    def take_damage(self, damage, hero, weapon_name):
+    def take_damage(self, damage, hero):
         # potong damage base pakai shield 30
         damage_akhir = damage - 30
         
@@ -72,11 +81,11 @@ class ShieldEnemy(Enemy):
         if self.hp < 0:
             self.hp = 0
             
-        print(f"{hero.name} menyerang {self.name} dengan {weapon_name} sebesar {damage_akhir} HP {self.name} sekarang {self.hp}")
+        print(f"HP {self.name} sekarang {self.hp}")
 
 # bos musuh (shield 40, attack 50)
 class BossEnemy(Enemy):
-    def take_damage(self, damage, hero, weapon_name):
+    def take_damage(self, damage, hero):
         damage_akhir = damage - 40
         if damage_akhir < 0:
             damage_akhir = 0
@@ -87,13 +96,13 @@ class BossEnemy(Enemy):
         if self.hp < 0:
             self.hp = 0
             
-        print(f"{hero.name} menyerang {self.name} dengan {weapon_name} sebesar {damage_akhir} HP {self.name} sekarang {self.hp}")
+        print(f"HP {self.name} sekarang {self.hp}")
         
         # bos otomatis counter kalo msh hidup
         if self.hp > 0:
-            hero.take_damage(50)
             print(f"{self.name} menyerang balik {hero.name} sebesar 50")
-            print(f"HP {hero.name} sekarang {hero.hp}")
+            hero.take_damage(50)
+
 
 # class utama pembungkus alur program
 class Game:
@@ -102,26 +111,36 @@ class Game:
         self.heroes = []
         self.items = {}
 
-    def main(self):
-        # loop masukin data hero
-        jumlah_hero = int(input("Masukkan jumlah hero: "))
-        for i in range(jumlah_hero):
-            data_hero = input(f"Hero {i+1} (format: Nama%Attack): ")
-            parts = data_hero.split("%")
-            # buat objek hero trus masukin list
-            hero_baru = Hero(parts[0], int(parts[1]))
-            self.heroes.append(hero_baru)
+    # nambahin hero ke dalem list
+    def add_hero(self, hero):
+        self.heroes.append(hero)
 
-        # loop masukin data item
-        jumlah_item = int(input("Masukkan jumlah item: "))
-        for i in range(jumlah_item):
-            data_item = input(f"Item {i+1} (format: Nama;Damage): ")
-            parts = data_item.split(";")
-            # jadikan dict dengan key nama item
-            item_baru = Item(parts[0], int(parts[1]))
-            self.items[parts[0]] = item_baru
+    # nambahin item ke dict
+    def add_item(self, item):
+        self.items[item.name] = item
 
-        # loop milih dan pasang senjata
+    # ngambil object hero klo cocok
+    def find_hero(self, name):
+        for hero in self.heroes:
+            if hero.name == name:
+                return hero
+        return None
+
+    # ngambil object item klo ada namanya
+    def find_item(self, name):
+        if name in self.items:
+            return self.items[name]
+        return None
+
+    # boolean ngecek klo smua hero dh punya item
+    def all_have_items(self):
+        for hero in self.heroes:
+            if hero.item is None:
+                return False
+        return True
+
+    # nge-wrap mekanisme pasang perlengkapan senjata
+    def prepare_items(self):
         print("=== PASANG SENJATA ===")
         while True:
             command = input("Command (PASANG;Hero;Item / DONE): ")
@@ -133,13 +152,35 @@ class Game:
                 nama_h = parts[1]
                 nama_i = parts[2]
                 
-                # cari hero dan bind itemnya
-                for hero in self.heroes:
-                    if hero.name == nama_h:
-                        if nama_i in self.items:
-                            hero.set_item(self.items[nama_i])
-                        print(f"{nama_h} berhasil memakai {nama_i} !")
-                        break
+                # manggil func dari di atas buat narik datanya
+                hero_target = self.find_hero(nama_h)
+                item_target = self.find_item(nama_i)
+                
+                # cek kalo objek beneran ketemu sblm di-set
+                if hero_target is not None and item_target is not None:
+                    hero_target.set_item(item_target)
+
+    def main(self):
+        # loop masukin data hero
+        jumlah_hero = int(input("Masukkan jumlah hero: "))
+        for i in range(jumlah_hero):
+            data_hero = input(f"Hero {i+1} (format: Nama%Attack): ")
+            parts = data_hero.split("%")
+            # panggil abstraksinya buat masang
+            hero_baru = Hero(parts[0], int(parts[1]))
+            self.add_hero(hero_baru)
+
+        # loop masukin data item
+        jumlah_item = int(input("Masukkan jumlah item: "))
+        for i in range(jumlah_item):
+            data_item = input(f"Item {i+1} (format: Nama;Damage): ")
+            parts = data_item.split(";")
+            # simpen pake add item
+            item_baru = Item(parts[0], int(parts[1]))
+            self.add_item(item_baru)
+
+        # panggil perulangan persiapannya dsni
+        self.prepare_items()
 
         # mulai battle level 1
         print("=== LEVEL 1 ===")
