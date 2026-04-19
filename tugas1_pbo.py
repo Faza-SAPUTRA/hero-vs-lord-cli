@@ -67,15 +67,19 @@ class BasicEnemy(Enemy):
 
 # musuh pakai shield 30
 class ShieldEnemy(Enemy):
+    def __init__(self, name, hp):
+        super().__init__(name, hp)
+        self.shield = 30
+
     def take_damage(self, damage, hero):
         # potong damage base pakai shield 30
-        damage_akhir = damage - 30
+        damage_akhir = damage - self.shield
         
         # cegah minus biar ga nambah hp
         if damage_akhir < 0:
             damage_akhir = 0
             
-        print(f"{self.name} mengaktifkan shield! Damage berkurang menjadi {damage_akhir}")
+        print(f"{self.name} mengaktifkan shield!\nDamage berkurang menjadi {damage_akhir}")
         
         self.hp -= damage_akhir
         if self.hp < 0:
@@ -85,12 +89,17 @@ class ShieldEnemy(Enemy):
 
 # bos musuh (shield 40, attack 50)
 class BossEnemy(Enemy):
+    def __init__(self, name, hp):
+        super().__init__(name, hp)
+        self.shield = 40
+        self.attack_power = 50
+
     def take_damage(self, damage, hero):
-        damage_akhir = damage - 40
+        damage_akhir = damage - self.shield
         if damage_akhir < 0:
             damage_akhir = 0
             
-        print(f"{self.name} mengaktifkan shield! Damage berkurang menjadi {damage_akhir}")
+        print(f"{self.name} mengaktifkan shield!\nDamage berkurang menjadi {damage_akhir}")
         
         self.hp -= damage_akhir
         if self.hp < 0:
@@ -100,8 +109,8 @@ class BossEnemy(Enemy):
         
         # bos otomatis counter kalo msh hidup
         if self.hp > 0:
-            print(f"{self.name} menyerang balik {hero.name} sebesar 50")
-            hero.take_damage(50)
+            print(f"{self.name} menyerang balik {hero.name} sebesar {self.attack_power}")
+            hero.take_damage(self.attack_power)
 
 
 # class utama pembungkus alur program
