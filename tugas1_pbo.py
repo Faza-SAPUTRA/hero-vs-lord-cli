@@ -164,6 +164,15 @@ class Game:
                 # manggil func dari di atas buat narik datanya
                 hero_target = self.find_hero(nama_h)
                 item_target = self.find_item(nama_i)
+
+                # # logika error message
+                # if hero_target is None:
+                #     print(f"Peringatan: Hero '{nama_h}' tidak ditemukan di daftar!")
+                # elif item_target is None:
+                #     print(f"Peringatan: Senjata '{nama_i}' tidak ditemukan di daftar!")
+                # else:
+                #     # Kalo dua-duanya aman (tidak None), baru pasang senjatanya
+                #     hero_target.set_item(item_target)
                 
                 # cek kalo objek beneran ketemu sblm di-set
                 if hero_target is not None and item_target is not None:
